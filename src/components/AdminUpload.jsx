@@ -6,7 +6,7 @@ export default function AdminUpload() {
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState('');
 
-  const createThumbnail = (file, maxSize = 800) => {
+  const resizeImage = (file, maxSize, quality) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -35,7 +35,7 @@ export default function AdminUpload() {
 
           canvas.toBlob((blob) => {
             resolve(blob);
-          }, 'image/jpeg', 0.85);
+          }, 'image/jpeg', quality);
         };
         img.onerror = reject;
         img.src = e.target.result;
@@ -60,18 +60,20 @@ export default function AdminUpload() {
         const filePath = `${fileName}`;
         const thumbnailPath = fileName.replace(/(\.[^.]+)$/, '_thumbnail$1');
 
+        const fullBlob = await resizeImage(file, 1600, 0.8);
         const { error: uploadError } = await supabase.storage
           .from('product-images')
-          .upload(filePath, file, {
+          .upload(filePath, fullBlob, {
             cacheControl: '3600',
-            upsert: true
+            upsert: true,
+            contentType: 'image/jpeg'
           });
 
         if (uploadError) {
           throw uploadError;
         }
 
-        const thumbnailBlob = await createThumbnail(file);
+        const thumbnailBlob = await resizeImage(file, 800, 0.85);
         const { error: thumbnailError } = await supabase.storage
           .from('product-images')
           .upload(thumbnailPath, thumbnailBlob, {

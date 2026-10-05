@@ -1,2 +1,7 @@
 node_modules/
 .env
+
+# Local-only secrets for scripts/storage-cleanup.mjs
+.env.cleanup
+storage-backup/
+dist/
